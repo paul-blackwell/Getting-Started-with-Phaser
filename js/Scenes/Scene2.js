@@ -23,57 +23,8 @@ class Scene2 extends Phaser.Scene {
         this.ship3 = this.add.sprite(config.width / 2 + 50, config.height / 2, 'ship3');
 
 
-        // Basic 2 frame looping animation 
-        this.anims.create({
-            key: 'ship1_anim',
-            frames: this.anims.generateFrameNumbers('ship'), // using the frames from the ship sprite sheet
-            frameRate: 20,
-            repeat: -1
-        })
-        this.anims.create({
-            key: 'ship2_anim',
-            frames: this.anims.generateFrameNumbers('ship2'),
-            frameRate: 20,
-            repeat: -1
-        })
-        this.anims.create({
-            key: 'ship3_anim',
-            frames: this.anims.generateFrameNumbers('ship3'),
-            frameRate: 20,
-            repeat: -1
-        })
 
-        this.anims.create({
-            key: 'explode',
-            frames: this.anims.generateFrameNumbers('explosion'),
-            frameRate: 20,
-            repeat: 0,
-            hideOnComplete: true
-        })
-
-
-        this.anims.create({
-            key: 'red',
-            frames: this.anims.generateFrameNumbers('power-up', {
-                start: 0,
-                end: 1
-            }),
-            frameRate: 20,
-            repeat: -1,
-        })
-
-        this.anims.create({
-            key: 'gray',
-            frames: this.anims.generateFrameNumbers('power-up', {
-                start: 2,
-                end: 3
-            }),
-            frameRate: 20,
-            repeat: -1,
-        })
-
-
-        // This will stop power ups from  colliding with each other
+        // Unsure what this does??
         //this.physics.world.setBoundsCollision();
 
 
@@ -139,7 +90,23 @@ class Scene2 extends Phaser.Scene {
          * 
          * - "this" is to pass the scope to the callback function
          */
-        this.input.on('gameobjectdown', this.destroyShip, this)
+        this.input.on('gameobjectdown', this.destroyShip, this);
+
+
+
+        // Add player
+        this.player= this.physics.add.sprite(config.width / 2 - 8, config.height - 64, 'player');
+        this.player.play('thrust');
+
+        // Make variable to listen for cursor keys
+        this.cursorKeys = this.input.keyboard.createCursorKeys();
+
+        // Stop player from going off the screen
+        this.player.setCollideWorldBounds(true)
+
+
+        //  Make variable to listen for space bar key so player can shoot
+        this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
 
         this.add.text(20, 20, 'Playing game', { font: '25px Arial', fill: 'yellow' })
@@ -160,6 +127,14 @@ class Scene2 extends Phaser.Scene {
          * from the update function 
          */
         this.background.tilePositionY -= 0.5;
+
+        // This function will control the players ship
+        this.movePlayerManager();
+
+        // Update loop when spacebar is pressed
+        if(Phaser.Input.Keyboard.JustDown(this.spacebar)) {
+            console.log('Fire')
+        }
     }
 
 
@@ -187,4 +162,37 @@ class Scene2 extends Phaser.Scene {
         gameObject.play('explode')
     }
 
+
+    movePlayerManager() {
+
+        /**
+         * So every time the left arrow key is pressed we adjust
+         * the speed of the players with a negative value, so they move
+         * to the left
+         * 
+         * else if the right key is pressed move to the right
+         * 
+         * else set the X velocity to 0 to stop the ship from moving
+         */
+        if(this.cursorKeys.left.isDown){
+            this.player.setVelocityX(-gameSettings.playerSpeed);
+        } else if (this.cursorKeys.right.isDown) {
+            this.player.setVelocityX(gameSettings.playerSpeed)
+        } else {
+            this.player.setVelocityX(0)
+        }
+
+
+        /**
+         * This is the same as the above but for the up down keys,
+         * setting the Y axis
+         */
+        if(this.cursorKeys.up.isDown){
+            this.player.setVelocityY(-gameSettings.playerSpeed);
+        } else if (this.cursorKeys.down.isDown) {
+            this.player.setVelocityY(gameSettings.playerSpeed)
+        } else {
+            this.player.setVelocityY(0)
+        }
+    }
 }
