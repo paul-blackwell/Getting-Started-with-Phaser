@@ -107,6 +107,7 @@ class Scene2 extends Phaser.Scene {
 
         //  Make variable to listen for space bar key so player can shoot
         this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.projectiles = this.add.group();
 
 
         this.add.text(20, 20, 'Playing game', { font: '25px Arial', fill: 'yellow' })
@@ -131,9 +132,14 @@ class Scene2 extends Phaser.Scene {
         // This function will control the players ship
         this.movePlayerManager();
 
-        // Update loop when spacebar is pressed
+        // Shoot beam when spacebar is pressed
         if(Phaser.Input.Keyboard.JustDown(this.spacebar)) {
-            console.log('Fire')
+            this.shootBeam();
+        }
+
+        for(let i = 0; i < this.projectiles.getChildren().length; i++){
+            const beam = this.projectiles.getChildren()[i];
+            beam.update();
         }
     }
 
@@ -195,4 +201,10 @@ class Scene2 extends Phaser.Scene {
             this.player.setVelocityY(0)
         }
     }
+
+
+    shootBeam() {
+        const beam = new Beam(this);
+    }
+
 }
