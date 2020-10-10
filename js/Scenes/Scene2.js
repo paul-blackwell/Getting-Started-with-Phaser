@@ -65,8 +65,6 @@ class Scene2 extends Phaser.Scene {
 
 
 
-
-
         // Play animations
         this.ship1.play('ship1_anim');
         this.ship2.play('ship2_anim');
@@ -77,6 +75,13 @@ class Scene2 extends Phaser.Scene {
         this.ship1.setInteractive();
         this.ship2.setInteractive();
         this.ship3.setInteractive();
+
+
+        // Make enemies 
+        this.enemies = this.physics.add.group();
+        this.enemies.add(this.ship1);
+        this.enemies.add(this.ship2);
+        this.enemies.add(this.ship3);
 
 
         /**
@@ -107,8 +112,41 @@ class Scene2 extends Phaser.Scene {
 
         //  Make variable to listen for space bar key so player can shoot
         this.spacebar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        // This will hold all the 'beam' Instances in the scene 
         this.projectiles = this.add.group();
 
+
+        /**
+         * Enable collisions between powerUps and beams
+         * If they do collied destroy the beam otherwise they will bounce
+         */
+        this.physics.add.collider(this.projectiles, this.powerUps, (projectile, powerUp) => {
+            projectile.destroy();
+        });
+
+        /**
+         * Let player pick up power-ups when they touch one
+         * 
+         * Note:
+         * The overlap function only calculates when two objects
+         * are touching, but does not simulate its physics
+         * 
+         * - the first two parameters are the objects that will check to collide
+         * - the third parameter is the callback function
+         * - the last two parameters are for the scope of the function 
+         */
+        this.physics.add.overlap(this.player, this.powerUps, this.pickPowerUp, null, this);
+
+
+
+        // Hurt player if they overlap with an enemy
+        this.physics.add.overlap(this.player, this.enemies, this.hurtPlayer, null, this);
+
+        // Add overlap with projectiles and enemies (so we can hurt them!)
+        this.physics.add.overlap(this.projectiles, this.enemies, this.hitEnemy, null, this);
+
+    
 
         this.add.text(20, 20, 'Playing game', { font: '25px Arial', fill: 'yellow' })
     }
@@ -137,6 +175,12 @@ class Scene2 extends Phaser.Scene {
             this.shootBeam();
         }
 
+        /**
+         * Run the update of each beam, this will
+         * destroy a beam when it gets 32px from the top of the screen.
+         * this.projectiles comes from Beam.js's update function
+         * check note on it there for more info 
+         */
         for(let i = 0; i < this.projectiles.getChildren().length; i++){
             const beam = this.projectiles.getChildren()[i];
             beam.update();
@@ -152,12 +196,12 @@ class Scene2 extends Phaser.Scene {
          * reset position if ship moves out of the height of our game
          */
         if (ship.y > config.height) {
-            this.restShipPos(ship)
+            this.resetShipPos(ship)
         }
     }
 
 
-    restShipPos(ship) {
+    resetShipPos(ship) {
         ship.y = 0;
         const randomX = Phaser.Math.Between(0, config.width);
         ship.x = randomX;
@@ -205,6 +249,38 @@ class Scene2 extends Phaser.Scene {
 
     shootBeam() {
         const beam = new Beam(this);
+    }
+ 
+    pickPowerUp(player, powerUp) {
+       
+         /**
+          * Disable the physics of the 'Power-up' object, the
+          * two parameters set to true, make it inactive and
+          * hide it from the display list (destroy it when the player
+          * touches it)
+          */
+        powerUp.disableBody(true, true);
+    }
+
+
+    hurtPlayer(player, enemy) {
+
+        // Reset the position of the enemy ship
+        this.resetShipPos(enemy);
+
+        // Reset the position of the players ship
+        player.x = config.width / 2 - 8;
+        player.y = config.height - 64;
+    }
+
+
+    hitEnemy(projectile, enemy) {
+
+        // Destroy projectile
+        projectile.destroy();
+
+        // Reset the position of the enemy ship
+        this.resetShipPos(enemy);
     }
 
 }
