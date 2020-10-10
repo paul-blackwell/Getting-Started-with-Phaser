@@ -100,7 +100,7 @@ class Scene2 extends Phaser.Scene {
 
 
         // Add player
-        this.player= this.physics.add.sprite(config.width / 2 - 8, config.height - 64, 'player');
+        this.player = this.physics.add.sprite(config.width / 2 - 8, config.height - 64, 'player');
         this.player.play('thrust');
 
         // Make variable to listen for cursor keys
@@ -146,9 +146,28 @@ class Scene2 extends Phaser.Scene {
         // Add overlap with projectiles and enemies (so we can hurt them!)
         this.physics.add.overlap(this.projectiles, this.enemies, this.hitEnemy, null, this);
 
-    
+        /**
+         * This will be are hud background behind the score to make 
+         * it more readable
+         */
+        const graphics = this.add.graphics();
+        graphics.fillStyle(0x000000, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 0);
+        graphics.lineTo(config.width, 0);
+        graphics.lineTo(config.width, 20);
+        graphics.lineTo(0, 20);
+        graphics.lineTo(0, 0);
+        graphics.closePath();
+        graphics.fillPath();
 
-        this.add.text(20, 20, 'Playing game', { font: '25px Arial', fill: 'yellow' })
+        // Set score to 0
+        this.score = 0;
+
+
+        // Add scoreLabel variable with Bitmap text function
+        this.scoreLabel = this.add.bitmapText(10, 5, 'pixelFont', 'SCORE:', 16)
+
     }
 
 
@@ -171,7 +190,7 @@ class Scene2 extends Phaser.Scene {
         this.movePlayerManager();
 
         // Shoot beam when spacebar is pressed
-        if(Phaser.Input.Keyboard.JustDown(this.spacebar)) {
+        if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
             this.shootBeam();
         }
 
@@ -181,7 +200,7 @@ class Scene2 extends Phaser.Scene {
          * this.projectiles comes from Beam.js's update function
          * check note on it there for more info 
          */
-        for(let i = 0; i < this.projectiles.getChildren().length; i++){
+        for (let i = 0; i < this.projectiles.getChildren().length; i++) {
             const beam = this.projectiles.getChildren()[i];
             beam.update();
         }
@@ -224,7 +243,7 @@ class Scene2 extends Phaser.Scene {
          * 
          * else set the X velocity to 0 to stop the ship from moving
          */
-        if(this.cursorKeys.left.isDown){
+        if (this.cursorKeys.left.isDown) {
             this.player.setVelocityX(-gameSettings.playerSpeed);
         } else if (this.cursorKeys.right.isDown) {
             this.player.setVelocityX(gameSettings.playerSpeed)
@@ -237,7 +256,7 @@ class Scene2 extends Phaser.Scene {
          * This is the same as the above but for the up down keys,
          * setting the Y axis
          */
-        if(this.cursorKeys.up.isDown){
+        if (this.cursorKeys.up.isDown) {
             this.player.setVelocityY(-gameSettings.playerSpeed);
         } else if (this.cursorKeys.down.isDown) {
             this.player.setVelocityY(gameSettings.playerSpeed)
@@ -250,15 +269,15 @@ class Scene2 extends Phaser.Scene {
     shootBeam() {
         const beam = new Beam(this);
     }
- 
+
     pickPowerUp(player, powerUp) {
-       
-         /**
-          * Disable the physics of the 'Power-up' object, the
-          * two parameters set to true, make it inactive and
-          * hide it from the display list (destroy it when the player
-          * touches it)
-          */
+
+        /**
+         * Disable the physics of the 'Power-up' object, the
+         * two parameters set to true, make it inactive and
+         * hide it from the display list (destroy it when the player
+         * touches it)
+         */
         powerUp.disableBody(true, true);
     }
 
@@ -276,11 +295,29 @@ class Scene2 extends Phaser.Scene {
 
     hitEnemy(projectile, enemy) {
 
+
         // Destroy projectile
         projectile.destroy();
 
         // Reset the position of the enemy ship
         this.resetShipPos(enemy);
+
+        // Increase score 
+        this.score += 15;
+        var scoreFormatted = this.zeroPad(this.score, 6)
+        this.scoreLabel.text = 'SCORE:' + scoreFormatted
+    }
+
+
+    /**
+     * This will just add a load of zeros to our score 'Make its look more retro'
+     */
+    zeroPad(number, size) {
+        let stringNumber = String(number);
+        while(stringNumber.length < (size || 2)){
+            stringNumber = `0${stringNumber}`;
+        }
+        return stringNumber;
     }
 
 }
