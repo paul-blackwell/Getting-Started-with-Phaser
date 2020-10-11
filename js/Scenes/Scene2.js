@@ -191,7 +191,9 @@ class Scene2 extends Phaser.Scene {
 
         // Shoot beam when spacebar is pressed
         if (Phaser.Input.Keyboard.JustDown(this.spacebar)) {
-            this.shootBeam();
+            if (this.player.active) {
+                this.shootBeam();
+            }
         }
 
         /**
@@ -287,14 +289,35 @@ class Scene2 extends Phaser.Scene {
         // Reset the position of the enemy ship
         this.resetShipPos(enemy);
 
-        // Reset the position of the players ship
-        player.x = config.width / 2 - 8;
-        player.y = config.height - 64;
+        // Make the player ship explode when hit
+        const explosion = new Explosion(this, player.x, player.y);
+
+        // Disable player 
+        player.disableBody(true, true);
+
+        // Reset player after 1 second 
+        this.time.addEvent({
+            delay: 1000,
+            callback: this.resetPlayer,
+            callbackScope: this,
+            loop: false
+        });
+
+          /**
+         * This will prevent the player being destroyed as long as it is re
+         * maining transparent (stops player getting killed
+         * immediately after respawning)
+         */
+        if(this.player.alpha < 1){
+            return;
+        }
     }
 
 
     hitEnemy(projectile, enemy) {
 
+        // Make the enemy ship explode
+        const explosion = new Explosion(this, enemy.x, enemy.y);
 
         // Destroy projectile
         projectile.destroy();
@@ -314,10 +337,46 @@ class Scene2 extends Phaser.Scene {
      */
     zeroPad(number, size) {
         let stringNumber = String(number);
-        while(stringNumber.length < (size || 2)){
+        while (stringNumber.length < (size || 2)) {
             stringNumber = `0${stringNumber}`;
         }
         return stringNumber;
+    }
+
+
+    // This will reset the player
+    resetPlayer() {
+        // Reset the position of the players ship
+        const x = config.width / 2 - 8;
+        const y = config.height + 64;
+
+        // Re-enable player
+        this.player.enableBody(true, x, y, true, true);
+
+        /**
+         * Make player transparent (stops player getting killed
+         * immediately after respawning)
+         */
+        this.player.alpha = 0.5;
+
+
+        /**
+         * After 1.5 seconds change alpha back to 1 but 
+         * add an animation as well as moving the player up the screen
+         * a little 
+         */
+        const tween = this.tweens.add({
+            targets: this.player,
+            y: config.height - 64,
+            ease: 'Power1',
+            duration: 1500,
+            repeat: 0,
+            onComplete: () => {
+                this.player.alpha = 1;
+            },
+            callbackScope: this
+        });
+
     }
 
 }
